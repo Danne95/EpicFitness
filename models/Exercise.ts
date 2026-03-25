@@ -5,7 +5,8 @@ export default class Exercise {
     public name: string,
     public primaryMuscle: string,
     public secondaryMuscle: string,
-    public category: 'strength' | 'cardio' | string,
-    public notes: string
+    public category: 'strength' | 'cardio' | 'stretching' | 'warmup' | string,
+    public notes: string,
+    public favorite: boolean = false
   ) {}
 }

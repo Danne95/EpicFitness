@@ -4,7 +4,7 @@ let db: SQLite.SQLiteDatabase;
 
 export const initDB = async () => {
   db = await SQLite.openDatabaseAsync('gymapp.db');
-
+  
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS exercises (
       id INTEGER PRIMARY KEY NOT NULL,
@@ -12,7 +12,8 @@ export const initDB = async () => {
       primary_muscle TEXT,
       secondary_muscle TEXT,
       category TEXT,
-      notes TEXT
+      notes TEXT,
+      favorite INTEGER DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS workouts (
