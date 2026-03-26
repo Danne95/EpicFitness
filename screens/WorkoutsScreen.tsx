@@ -92,10 +92,14 @@ export default function WorkoutsScreen({ navigation }: Props) {
         onPress={() => navigation.navigate('WorkoutDetails', { workoutId: item.id! })}
       >
         <View style={styles.itemHeader}>
-          <Text style={styles.itemTitle}>{item.name}</Text>
-          <Text style={{ marginLeft: 5 }}>{item.favorite ? '⭐' : ''}</Text>
-        </View>
+          <Text style={[styles.itemTitle, { flexShrink: 1 }]} numberOfLines={1} ellipsizeMode="tail" >
+            {item.name}
+          </Text>
 
+          {!editingMode && item.favorite && (
+            <Text>⭐</Text>
+          )}
+        </View>
         {editingMode && (
           <View style={{ flexDirection: 'row', marginTop: 5 }}>
             <Button title={item.favorite ? '⭐' : '☆'} onPress={() => toggleFavorite(item)} />
@@ -113,7 +117,7 @@ export default function WorkoutsScreen({ navigation }: Props) {
     <View style={{ flex: 1, padding: 20 }}>
       {/* Header with toggle */}
       <View style={styles.header}>
-        <Text style={styles.title}>Workouts</Text>
+        <Text style={styles.title}>Workouts List:</Text>
         <TogglePill
           value={editingMode}
           onChange={setEditingMode}
@@ -156,11 +160,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   title: { fontSize: 24, fontWeight: 'bold' },
-  editToggle: {
-    padding: 8,
-    backgroundColor: '#eee',
-    borderRadius: 5,
-  },
   formContainer: { marginBottom: 15 },
   itemContainer: {
     marginBottom: 15,

@@ -197,7 +197,7 @@ export default function WorkoutDetailsScreen({ route }: Props) {
     <View style={{ flex: 1, padding: 20 }}>
       {/* Header with toggle */}
       <View style={styles.header}>
-        <Text style={styles.title}>Exercises</Text>
+        <Text style={styles.title}>Exercises List:</Text>
         <TogglePill
           value={editingMode}
           onChange={setEditingMode}
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 15,
   },
-  title: { fontWeight: 'bold', fontSize: 20, marginBottom: 20 },
+  title: { fontWeight: 'bold', fontSize: 24 },
   itemContainer: {
     marginBottom: 15,
     borderBottomWidth: 1,
@@ -249,36 +249,4 @@ const styles = StyleSheet.create({
   },
   itemTitle: { fontWeight: 'bold', fontSize: 16 },
   input: { borderWidth: 1, padding: 5, marginVertical: 3, borderRadius: 5 },
-
-  // Toggle pill styles
-  togglePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: '#eee',
-    minWidth: 80,
-    justifyContent: 'center',
-  },
-  togglePillActive: {
-    backgroundColor: '#4caf50',
-  },
-  toggleCircle: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#888',
-    marginRight: 8,
-  },
-  toggleCircleActive: {
-    backgroundColor: '#fff',
-  },
-  toggleText: {
-    fontWeight: 'bold',
-    color: '#555',
-  },
-  toggleTextActive: {
-    color: '#fff',
-  },
 });

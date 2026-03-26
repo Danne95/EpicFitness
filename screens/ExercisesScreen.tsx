@@ -1,12 +1,20 @@
 // screens/ExercisesScreen.tsx
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, Button, FlatList, TextInput, Alert,
-  TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager
+  View,
+  Text,
+  Button,
+  FlatList,
+  TextInput,
+  Alert,
+  StyleSheet,
+  Platform,
+  UIManager,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import ExerciseService from '../services/ExerciseService';
 import Exercise from '../models/Exercise';
+import TogglePill from '../components/TogglePill';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -16,40 +24,51 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export default function ExercisesScreen() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [search, setSearch] = useState('');
+  const [editingMode, setEditingMode] = useState(false);
+
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
 
   const [name, setName] = useState('');
   const [primary, setPrimary] = useState('');
   const [secondary, setSecondary] = useState('');
   const [category, setCategory] = useState<'strength'|'cardio'|'stretching'|'warmup'>('strength');
   const [notes, setNotes] = useState('');
-  const [formOpen, setFormOpen] = useState(false);
 
   // Load exercises
   const load = async () => setExercises(await ExerciseService.getAll());
   useEffect(() => { load(); }, []);
 
-  // Toggle collapsible form
-  const toggleForm = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setFormOpen(!formOpen);
-  };
+  // Close form when exiting edit mode
+  useEffect(() => {
+    if (!editingMode) {
+      setFormOpen(false);
+      setEditingId(null);
+    }
+  }, [editingMode]);
 
-  // Save new or updated exercise
   const saveExercise = async () => {
-    if (!name.trim()) { alert('Exercise name required'); return; }
+    if (!name.trim()) {
+      alert('Exercise name required');
+      return;
+    }
+
     const ex = new Exercise(editingId, name, primary, secondary, category, notes);
+
     if (editingId) await ExerciseService.update(ex);
     else await ExerciseService.create(ex);
 
-    // Reset form
-    setEditingId(null); setName(''); setPrimary(''); setSecondary('');
-    setCategory('strength'); setNotes('');
-    load();
+    setEditingId(null);
+    setName('');
+    setPrimary('');
+    setSecondary('');
+    setCategory('strength');
+    setNotes('');
+
+    await load();
     setFormOpen(false);
   };
 
-  // Edit exercise
   const editExercise = (ex: Exercise) => {
     setEditingId(ex.id!);
     setName(ex.name);
@@ -60,15 +79,20 @@ export default function ExercisesScreen() {
     setFormOpen(true);
   };
 
-  // Delete exercise with confirmation
   const deleteExercise = (id: number) => {
     Alert.alert('Delete Exercise', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => { await ExerciseService.delete(id); load(); } }
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await ExerciseService.delete(id);
+          load();
+        },
+      },
     ]);
   };
 
-  // Logical search with priority + favorite
   const getSortedSearchResults = () => {
     if (!search.trim()) {
       return [...exercises].sort((a, b) => {
@@ -81,7 +105,10 @@ export default function ExercisesScreen() {
     const lowerSearch = search.toLowerCase();
     const result: Exercise[] = [];
 
-    const pushIfMatch = (field: 'name' | 'primaryMuscle' | 'secondaryMuscle' | 'category' | 'notes', fav: boolean) => {
+    const pushIfMatch = (
+      field: 'name' | 'primaryMuscle' | 'secondaryMuscle' | 'category' | 'notes',
+      fav: boolean
+    ) => {
       exercises.forEach(ex => {
         const value = ex[field];
         if (
@@ -95,92 +122,159 @@ export default function ExercisesScreen() {
       });
     };
 
-    // Search priority: favorites first, then non-favorites; within each group, order by relevance of fields
     const fields: ('name' | 'primaryMuscle' | 'secondaryMuscle' | 'category' | 'notes')[] =
       ['name', 'primaryMuscle', 'secondaryMuscle', 'category', 'notes'];
 
     fields.forEach(field => {
-      pushIfMatch(field, true);  // favorites first
-      pushIfMatch(field, false); // then non-favorites
+      pushIfMatch(field, true);
+      pushIfMatch(field, false);
     });
 
     return result;
   };
 
-  // Render one exercise item
   const renderItem = ({ item }: { item: Exercise }) => (
     <View style={styles.itemContainer}>
-      <Text style={styles.itemTitle}>{item.name} ({item.primaryMuscle})</Text>
-      <Text style={styles.itemCategory}><Text style={styles.label}>Category: </Text>{item.category}</Text>
-      {item.secondaryMuscle ? <Text style={styles.itemSecondary}><Text style={styles.label}>Secondary muscle: </Text>{item.secondaryMuscle}</Text> : null}
-      {item.notes ? <Text style={styles.itemNotes}><Text style={styles.label}>Note: </Text>{item.notes}</Text> : null}
+      {/* Title + Star */}
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Text
+          style={[styles.itemTitle, { flex: 1 }]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {item.name} ({item.primaryMuscle})
+        </Text>
 
-      <View style={{ flexDirection: 'row', marginTop: 5, alignItems: 'center' }}>
-        <Button title={item.favorite ? '⭐' : '☆'} onPress={async () => {
-          await ExerciseService.toggleFavorite(item.id!, !item.favorite);
-          load();
-        }} />
-        <View style={{ width: 10 }} />
-        <Button title="Edit" onPress={() => editExercise(item)} />
-        <View style={{ width: 10 }} />
-        <Button title="Delete" color="red" onPress={() => deleteExercise(item.id!)} />
+        {!editingMode && item.favorite && <Text>⭐</Text>}
       </View>
+
+      <Text style={styles.itemCategory}>
+        <Text style={styles.label}>Category: </Text>{item.category}
+      </Text>
+
+      {item.secondaryMuscle ? (
+        <Text style={styles.itemSecondary}>
+          <Text style={styles.label}>Secondary: </Text>{item.secondaryMuscle}
+        </Text>
+      ) : null}
+
+      {item.notes ? (
+        <Text style={styles.itemNotes}>
+          <Text style={styles.label}>Note: </Text>{item.notes}
+        </Text>
+      ) : null}
+
+      {/* Editing buttons */}
+      {editingMode && (
+        <View style={{ flexDirection: 'row', marginTop: 5 }}>
+          <Button
+            title={item.favorite ? '⭐' : '☆'}
+            onPress={async () => {
+              await ExerciseService.toggleFavorite(item.id!, !item.favorite);
+              load();
+            }}
+          />
+          <View style={{ width: 10 }} />
+          <Button title="Edit" onPress={() => editExercise(item)} />
+          <View style={{ width: 10 }} />
+          <Button title="Delete" color="red" onPress={() => deleteExercise(item.id!)} />
+        </View>
+      )}
     </View>
   );
 
   return (
-    <View style={{ flex: 1 }}>
-      {/* Fixed Top: Search + Form */}
-      <View style={styles.topContainer}>
-        <TextInput
-          placeholder="Search exercises"
-          value={search}
-          onChangeText={setSearch}
-          style={styles.searchInput}
+    <View style={{ flex: 1, padding: 20 }}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Exercises</Text>
+        <TogglePill
+          value={editingMode}
+          onChange={setEditingMode}
+          activeText="Edit"
+          inactiveText="View"
+          width={100}
+          height={40}
         />
-
-        <TouchableOpacity onPress={toggleForm} style={styles.toggleButton}>
-          <Text style={{ fontWeight: 'bold' }}>{formOpen ? '▼' : '►'} {editingId ? 'Edit Exercise' : 'Add Exercise'}</Text>
-        </TouchableOpacity>
-
-        {formOpen && (
-          <View style={styles.formContainer}>
-            <TextInput placeholder="Name" value={name} onChangeText={setName} style={styles.input} />
-            <TextInput placeholder="Primary Muscle" value={primary} onChangeText={setPrimary} style={styles.input} />
-            <TextInput placeholder="Secondary Muscle" value={secondary} onChangeText={setSecondary} style={styles.input} />
-
-            <Text style={{ fontWeight: 'bold' }}>Category:</Text>
-            <Picker selectedValue={category} onValueChange={v => setCategory(v as any)} style={styles.picker}>
-              <Picker.Item label="Strength" value="strength" />
-              <Picker.Item label="Cardio" value="cardio" />
-              <Picker.Item label="Stretching" value="stretching" />
-              <Picker.Item label="Warmup" value="warmup" />
-            </Picker>
-
-            <TextInput placeholder="Notes" value={notes} onChangeText={setNotes} multiline style={[styles.input, { height: 60 }]} />
-            <Button title={editingId ? 'Update Exercise' : 'Add Exercise'} onPress={saveExercise} />
-          </View>
-        )}
       </View>
 
-      {/* Exercises List */}
+      {/* Search */}
+      <TextInput
+        placeholder="Search exercises"
+        value={search}
+        onChangeText={setSearch}
+        style={styles.searchInput}
+      />
+
+      {/* Add button */}
+      {editingMode && !formOpen && (
+        <Button
+          title="Add Exercise"
+          onPress={() => {
+            setEditingId(null);
+            setName('');
+            setPrimary('');
+            setSecondary('');
+            setCategory('strength');
+            setNotes('');
+            setFormOpen(true);
+          }}
+        />
+      )}
+
+      {/* Inline Form */}
+      {editingMode && formOpen && (
+        <View style={styles.formContainer}>
+          <TextInput placeholder="Name" value={name} onChangeText={setName} style={styles.input} />
+          <TextInput placeholder="Primary Muscle" value={primary} onChangeText={setPrimary} style={styles.input} />
+          <TextInput placeholder="Secondary Muscle" value={secondary} onChangeText={setSecondary} style={styles.input} />
+
+          <Text style={{ fontWeight: 'bold' }}>Category:</Text>
+          <Picker selectedValue={category} onValueChange={v => setCategory(v as any)} style={styles.picker}>
+            <Picker.Item label="Strength" value="strength" />
+            <Picker.Item label="Cardio" value="cardio" />
+            <Picker.Item label="Stretching" value="stretching" />
+            <Picker.Item label="Warmup" value="warmup" />
+          </Picker>
+
+          <TextInput
+            placeholder="Notes"
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+            style={[styles.input, { height: 60 }]}
+          />
+
+          <Button
+            title={editingId ? 'Update Exercise' : 'Add Exercise'}
+            onPress={saveExercise}
+          />
+
+          <Button 
+            title="Cancel" 
+            color="red"
+            onPress={() => setFormOpen(false)} 
+          />
+        </View>
+      )}
+
+      {/* List */}
       <FlatList
         data={getSortedSearchResults()}
         keyExtractor={item => item.id!.toString()}
         renderItem={renderItem}
-        contentContainerStyle={{ padding: 20 }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  topContainer: { paddingHorizontal: 20, paddingTop: 10, backgroundColor: '#fff', zIndex: 1 },
-  searchInput: { borderWidth: 1, padding: 5, marginBottom: 5 },
-  toggleButton: { paddingVertical: 5 },
-  formContainer: { marginBottom: 10 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
+  title: { fontSize: 24, fontWeight: 'bold' },
+  searchInput: { borderWidth: 1, padding: 5, marginBottom: 10 },
+  formContainer: { marginBottom: 15 },
   input: { borderWidth: 1, padding: 5, marginBottom: 5 },
-  picker: { borderWidth: 1, marginBottom: 5 },
+  picker: { marginBottom: 10 },
   itemContainer: { marginBottom: 10, borderBottomWidth: 1, paddingBottom: 5 },
   itemTitle: { fontWeight: 'bold', fontSize: 16 },
   itemCategory: { fontSize: 14, color: '#555' },
