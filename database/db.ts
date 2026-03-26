@@ -15,20 +15,23 @@ export const initDB = async () => {
       notes TEXT,
       favorite INTEGER DEFAULT 0
     );
-
+    
     CREATE TABLE IF NOT EXISTS workouts (
       id INTEGER PRIMARY KEY NOT NULL,
-      name TEXT
+      name TEXT,
+      favorite INTEGER DEFAULT 0
     );
-
+    
     CREATE TABLE IF NOT EXISTS workout_exercises (
       id INTEGER PRIMARY KEY NOT NULL,
       workout_id INTEGER,
       exercise_id INTEGER,
+      order_index INTEGER, 
       sets INTEGER,
       reps INTEGER,
       duration INTEGER,
       weight REAL,
+      rest_time INTEGER,
       notes TEXT
     );
 

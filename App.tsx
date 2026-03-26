@@ -1,14 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
+import { View, Text } from 'react-native';
+
 import ExercisesScreen from './screens/ExercisesScreen';
 import WorkoutsScreen from './screens/WorkoutsScreen';
+import WorkoutDetailsScreen from './screens/WorkoutDetailsScreen';
 import PlansScreen from './screens/PlansScreen';
 import HistoryScreen from './screens/HistoryScreen';
 import { initDB } from './database/db';
-import { View, Text } from 'react-native';
 
+// ✅ Tab navigator
 const Tab = createBottomTabNavigator();
+
+// ✅ Workouts stack navigator
+export type WorkoutsStackParamList = {
+  WorkoutsList: undefined;
+  WorkoutDetails: { workoutId: number };
+};
+const WorkoutsStack = createNativeStackNavigator<WorkoutsStackParamList>();
+
+function WorkoutsStackScreen() {
+  return (
+    <WorkoutsStack.Navigator>
+      <WorkoutsStack.Screen
+        name="WorkoutsList"
+        component={WorkoutsScreen}
+        options={{ headerShown: false }} // hide default title
+      />
+      <WorkoutsStack.Screen
+        name="WorkoutDetails"
+        component={WorkoutDetailsScreen}
+        // options={{ title: 'Workout Details' }}
+        options={{ headerShown: false }} // hide default title
+      />
+    </WorkoutsStack.Navigator>
+  );
+}
 
 export default function App() {
   const [ready, setReady] = useState(false);
@@ -22,7 +51,6 @@ export default function App() {
         console.error('DB INIT ERROR:', err);
       }
     };
-
     setup();
   }, []);
 
@@ -38,7 +66,7 @@ export default function App() {
     <NavigationContainer>
       <Tab.Navigator>
         <Tab.Screen name="Exercises" component={ExercisesScreen} />
-        <Tab.Screen name="Workouts" component={WorkoutsScreen} />
+        <Tab.Screen name="Workouts" component={WorkoutsStackScreen} />
         <Tab.Screen name="Plans" component={PlansScreen} />
         <Tab.Screen name="History" component={HistoryScreen} />
       </Tab.Navigator>
