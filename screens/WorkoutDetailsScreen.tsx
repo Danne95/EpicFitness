@@ -23,6 +23,15 @@ interface Props {
   navigation: any;
 }
 
+interface ExerciseEditDraft {
+  sets: string;
+  reps: string;
+  duration: string;
+  weight: string;
+  restTime: string;
+  notes: string;
+}
+
 export default function WorkoutDetailsScreen({ route }: Props) {
   const workoutId: number = route.params.workoutId;
 
@@ -31,6 +40,7 @@ export default function WorkoutDetailsScreen({ route }: Props) {
   const [allExercises, setAllExercises] = useState<Exercise[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingMode, setEditingMode] = useState(false);
+  const [editDraft, setEditDraft] = useState<ExerciseEditDraft | null>(null);
 
   useEffect(() => {
     loadWorkout();
@@ -46,6 +56,40 @@ export default function WorkoutDetailsScreen({ route }: Props) {
     const allWorkouts = await WorkoutService.getAll();
     const selectedWorkout = allWorkouts.find(current => current.id === workoutId);
     setWorkout(selectedWorkout || null);
+  };
+
+  const toDraft = (exercise: WorkoutExercise): ExerciseEditDraft => ({
+    sets: exercise.sets?.toString() || '',
+    reps: exercise.reps?.toString() || '',
+    duration: exercise.duration?.toString() || '',
+    weight: exercise.weight?.toString() || '',
+    restTime: exercise.restTime?.toString() || '',
+    notes: exercise.notes || '',
+  });
+
+  const parseInteger = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed ? parseInt(trimmed, 10) : undefined;
+  };
+
+  const parseFloatValue = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed ? parseFloat(trimmed) : undefined;
+  };
+
+  const startEdit = (index: number) => {
+    if (!workout) return;
+    setEditingIndex(index);
+    setEditDraft(toDraft(workout.exercises[index]));
+  };
+
+  const cancelEdit = () => {
+    setEditingIndex(null);
+    setEditDraft(null);
+  };
+
+  const updateDraft = (field: keyof ExerciseEditDraft, value: string) => {
+    setEditDraft(current => (current ? { ...current, [field]: value } : current));
   };
 
   const handleSelectExercise = async (exercise: Exercise) => {
@@ -97,6 +141,7 @@ export default function WorkoutDetailsScreen({ route }: Props) {
       workout.exercises[newIndex],
       workout.exercises[index],
     ];
+
     workout.exercises.forEach((exercise, orderIndex) => {
       exercise.orderIndex = orderIndex;
     });
@@ -105,11 +150,20 @@ export default function WorkoutDetailsScreen({ route }: Props) {
     loadWorkout();
   };
 
-  const saveEdit = async (index: number, updated: Partial<WorkoutExercise>) => {
-    if (!workout) return;
-    Object.assign(workout.exercises[index], updated);
+  const saveEdit = async (index: number) => {
+    if (!workout || !editDraft) return;
+
+    Object.assign(workout.exercises[index], {
+      sets: parseInteger(editDraft.sets),
+      reps: parseInteger(editDraft.reps),
+      duration: parseInteger(editDraft.duration),
+      weight: parseFloatValue(editDraft.weight),
+      restTime: parseInteger(editDraft.restTime),
+      notes: editDraft.notes,
+    });
+
     await WorkoutService.update(workout);
-    setEditingIndex(null);
+    cancelEdit();
     loadWorkout();
   };
 
@@ -124,53 +178,53 @@ export default function WorkoutDetailsScreen({ route }: Props) {
   const renderItem = ({ item, index }: { item: WorkoutExercise; index: number }) => {
     const exerciseInfo = allExercises.find(exercise => exercise.id === item.exerciseId);
 
-    if (editingIndex === index) {
+    if (editingIndex === index && editDraft) {
       return (
         <View style={styles.itemContainer}>
           <Text style={styles.itemTitle}>{exerciseInfo?.name}</Text>
           <TextInput
             placeholder="Sets"
             keyboardType="numeric"
-            value={item.sets?.toString() || ''}
-            onChangeText={text => (item.sets = text ? parseInt(text, 10) : undefined)}
+            value={editDraft.sets}
+            onChangeText={text => updateDraft('sets', text)}
             style={styles.input}
           />
           <TextInput
             placeholder="Reps"
             keyboardType="numeric"
-            value={item.reps?.toString() || ''}
-            onChangeText={text => (item.reps = text ? parseInt(text, 10) : undefined)}
+            value={editDraft.reps}
+            onChangeText={text => updateDraft('reps', text)}
             style={styles.input}
           />
           <TextInput
             placeholder="Duration"
             keyboardType="numeric"
-            value={item.duration?.toString() || ''}
-            onChangeText={text => (item.duration = text ? parseInt(text, 10) : undefined)}
+            value={editDraft.duration}
+            onChangeText={text => updateDraft('duration', text)}
             style={styles.input}
           />
           <TextInput
             placeholder="Weight"
             keyboardType="numeric"
-            value={item.weight?.toString() || ''}
-            onChangeText={text => (item.weight = text ? parseFloat(text) : undefined)}
+            value={editDraft.weight}
+            onChangeText={text => updateDraft('weight', text)}
             style={styles.input}
           />
           <TextInput
             placeholder="Rest Time"
             keyboardType="numeric"
-            value={item.restTime?.toString() || ''}
-            onChangeText={text => (item.restTime = text ? parseInt(text, 10) : undefined)}
+            value={editDraft.restTime}
+            onChangeText={text => updateDraft('restTime', text)}
             style={styles.input}
           />
           <TextInput
             placeholder="Notes"
-            value={item.notes || ''}
-            onChangeText={text => (item.notes = text)}
+            value={editDraft.notes}
+            onChangeText={text => updateDraft('notes', text)}
             style={styles.input}
           />
-          <Button title="Save" onPress={() => saveEdit(index, item)} />
-          <Button title="Cancel" onPress={() => setEditingIndex(null)} />
+          <Button title="Save" onPress={() => saveEdit(index)} />
+          <Button title="Cancel" onPress={cancelEdit} />
         </View>
       );
     }
@@ -191,11 +245,11 @@ export default function WorkoutDetailsScreen({ route }: Props) {
 
         {editingMode && (
           <View style={styles.actionRow}>
-            <Button title="â–²" onPress={() => moveExercise(index, 'up')} />
+            <Button title={'\u25B2'} onPress={() => moveExercise(index, 'up')} />
             <View style={styles.actionSpacer} />
-            <Button title="â–¼" onPress={() => moveExercise(index, 'down')} />
+            <Button title={'\u25BC'} onPress={() => moveExercise(index, 'down')} />
             <View style={styles.actionSpacer} />
-            <Button title="Edit" onPress={() => setEditingIndex(index)} />
+            <Button title="Edit" onPress={() => startEdit(index)} />
             <View style={styles.actionSpacer} />
             <Button title="Delete" color={colors.danger} onPress={() => deleteExercise(index)} />
           </View>
