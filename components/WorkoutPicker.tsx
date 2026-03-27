@@ -3,7 +3,6 @@ import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from 'r
 import Workout from '../models/Workout';
 import WorkoutService from '../services/WorkoutService';
 import { commonStyles } from '../styles/common';
-import { colors, spacing } from '../styles/theme';
 
 interface Props {
   onSelect: (workout: Workout) => void;
@@ -47,9 +46,10 @@ export default function WorkoutPicker({ onSelect, excludeIds = [] }: Props) {
 
   const renderItem = ({ item }: { item: Workout }) => (
     <TouchableOpacity style={styles.item} onPress={() => onSelect(item)}>
-      <Text style={styles.name}>
-        {item.name} {item.favorite ? '\u2B50' : '\u2606'}
-      </Text>
+      <View style={commonStyles.listItemHeader}>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text>{item.favorite ? '\u2B50' : '\u2606'}</Text>
+      </View>
       <Text style={styles.details}>
         {item.exercises.length} exercise{item.exercises.length === 1 ? '' : 's'}
       </Text>
@@ -69,7 +69,7 @@ export default function WorkoutPicker({ onSelect, excludeIds = [] }: Props) {
         data={getSortedSearchResults()}
         keyExtractor={item => item.id!.toString()}
         renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={commonStyles.listContent}
         ListEmptyComponent={<Text style={commonStyles.mutedText}>No workouts available.</Text>}
       />
     </View>
@@ -80,14 +80,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  listContent: {
-    paddingBottom: spacing.lg,
-  },
-  item: {
-    padding: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  name: commonStyles.itemTitle,
-  details: commonStyles.mutedText,
+  item: commonStyles.interactiveListItem,
+  name: commonStyles.listItemTitle,
+  details: commonStyles.listItemMeta,
 });

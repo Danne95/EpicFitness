@@ -233,16 +233,16 @@ export default function WorkoutDetailsScreen({ route, navigation }: Props) {
     return (
       <View style={styles.itemContainer}>
         <Text style={styles.itemTitle}>{exerciseInfo?.name}</Text>
-        <Text style={commonStyles.bodyText}>
+        <Text style={commonStyles.listItemMeta}>
           {exerciseInfo?.primaryMuscle}
           {exerciseInfo?.secondaryMuscle ? `, ${exerciseInfo.secondaryMuscle}` : ''}
         </Text>
-        {item.sets !== undefined ? <Text style={commonStyles.bodyText}>Sets: {item.sets}</Text> : null}
-        {item.reps !== undefined ? <Text style={commonStyles.bodyText}>Reps: {item.reps}</Text> : null}
-        {item.duration ? <Text style={commonStyles.bodyText}>Duration: {item.duration}</Text> : null}
-        {item.weight ? <Text style={commonStyles.bodyText}>Weight: {item.weight}</Text> : null}
-        {item.restTime ? <Text style={commonStyles.bodyText}>Rest: {item.restTime}</Text> : null}
-        {item.notes ? <Text style={commonStyles.bodyText}>Note: {item.notes}</Text> : null}
+        {item.sets !== undefined ? <Text style={commonStyles.listItemMeta}>Sets: {item.sets}</Text> : null}
+        {item.reps !== undefined ? <Text style={commonStyles.listItemMeta}>Reps: {item.reps}</Text> : null}
+        {item.duration ? <Text style={commonStyles.listItemMeta}>Duration: {item.duration}</Text> : null}
+        {item.weight ? <Text style={commonStyles.listItemMeta}>Weight: {item.weight}</Text> : null}
+        {item.restTime ? <Text style={commonStyles.listItemMeta}>Rest: {item.restTime}</Text> : null}
+        {item.notes ? <Text style={commonStyles.listItemNote}>Note: {item.notes}</Text> : null}
 
         {editingMode && (
           <View style={styles.actionRow}>
@@ -282,7 +282,7 @@ export default function WorkoutDetailsScreen({ route, navigation }: Props) {
         data={[...workout.exercises].sort((a, b) => a.orderIndex - b.orderIndex)}
         keyExtractor={(_, index) => index.toString()}
         renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={commonStyles.listContent}
       />
 
       {editingMode && <Button title="Add Exercise" onPress={() => setPickerVisible(true)} />}
@@ -301,19 +301,13 @@ export default function WorkoutDetailsScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  listContent: {
-    paddingBottom: spacing.lg,
-  },
   modalContainer: {
     flex: 1,
     padding: spacing.sm,
     backgroundColor: colors.background,
   },
-  itemContainer: {
-    ...commonStyles.listItem,
-    marginBottom: spacing.md,
-  },
-  itemTitle: commonStyles.itemTitle,
+  itemContainer: commonStyles.listItem,
+  itemTitle: commonStyles.listItemTitle,
   input: {
     ...commonStyles.input,
     marginVertical: 3,

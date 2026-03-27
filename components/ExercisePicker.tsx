@@ -10,7 +10,6 @@ import {
 import ExerciseService from '../services/ExerciseService';
 import Exercise from '../models/Exercise';
 import { commonStyles } from '../styles/common';
-import { colors, spacing } from '../styles/theme';
 
 interface Props {
   onSelect: (exercise: Exercise) => void;
@@ -78,13 +77,16 @@ export default function ExercisePicker({ onSelect, excludeIds = [] }: Props) {
 
   const renderItem = ({ item }: { item: Exercise }) => (
     <TouchableOpacity style={styles.item} onPress={() => onSelect(item)}>
-      <Text style={styles.name}>
-        {item.name} {item.favorite ? '\u2B50' : '\u2606'}
-      </Text>
+      <View style={commonStyles.listItemHeader}>
+        <Text style={styles.name}>
+          {item.name}
+        </Text>
+        <Text>{item.favorite ? '\u2B50' : '\u2606'}</Text>
+      </View>
       <Text style={styles.details}>
         {item.primaryMuscle}
         {item.secondaryMuscle ? `, ${item.secondaryMuscle}` : ''}
-        {' â€¢ ' + item.category}
+        {` • ${item.category}`}
       </Text>
       {item.notes ? <Text style={styles.notes}>{item.notes}</Text> : null}
     </TouchableOpacity>
@@ -103,7 +105,7 @@ export default function ExercisePicker({ onSelect, excludeIds = [] }: Props) {
         data={getSortedSearchResults()}
         keyExtractor={item => item.id!.toString()}
         renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={commonStyles.listContent}
       />
     </View>
   );
@@ -113,18 +115,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  listContent: {
-    paddingBottom: spacing.lg,
-  },
-  item: {
-    padding: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  name: commonStyles.itemTitle,
-  details: commonStyles.mutedText,
+  item: commonStyles.listItem,
+  name: commonStyles.listItemTitle,
+  details: commonStyles.listItemMeta,
   notes: {
-    ...commonStyles.subtleText,
+    ...commonStyles.listItemNote,
     fontStyle: 'italic',
   },
 });

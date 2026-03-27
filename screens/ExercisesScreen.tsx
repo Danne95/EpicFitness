@@ -144,7 +144,7 @@ export default function ExercisesScreen() {
 
   const renderItem = ({ item }: { item: Exercise }) => (
     <View style={styles.itemContainer}>
-      <View style={commonStyles.row}>
+      <View style={commonStyles.listItemHeader}>
         <Text style={styles.itemTitle} numberOfLines={1} ellipsizeMode="tail">
           {item.name} ({item.primaryMuscle})
         </Text>
@@ -264,6 +264,7 @@ export default function ExercisesScreen() {
         data={getSortedSearchResults()}
         keyExtractor={item => item.id!.toString()}
         renderItem={renderItem}
+        contentContainerStyle={commonStyles.listContent}
       />
     </View>
   );
@@ -281,11 +282,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   itemContainer: commonStyles.listItem,
-  itemTitle: {
-    ...commonStyles.itemTitle,
-    flex: 1,
-  },
-  itemMeta: commonStyles.mutedText,
+  itemTitle: commonStyles.listItemTitle,
+  itemMeta: commonStyles.listItemMeta,
   actionRow: {
     ...commonStyles.row,
     marginTop: spacing.xs,

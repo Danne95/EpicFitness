@@ -149,7 +149,7 @@ export default function PlansScreen({ navigation }: Props) {
         data={plans}
         keyExtractor={item => item.id!.toString()}
         renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={commonStyles.listContent}
         ListEmptyComponent={<Text style={commonStyles.mutedText}>No training plans yet.</Text>}
       />
     </View>
@@ -157,13 +157,10 @@ export default function PlansScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  listContent: {
-    paddingBottom: spacing.lg,
-  },
-  itemContainer: commonStyles.card,
-  itemHeader: commonStyles.row,
+  itemContainer: commonStyles.interactiveListItem,
+  itemHeader: commonStyles.listItemHeader,
   itemTitle: {
-    ...commonStyles.itemTitle,
+    ...commonStyles.listItemTitle,
     flexShrink: 1,
   },
   input: {

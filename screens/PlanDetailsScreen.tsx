@@ -181,7 +181,7 @@ export default function PlanDetailsScreen({ route, navigation }: Props) {
         data={[...plan.workouts].sort((a, b) => a.sequence - b.sequence)}
         keyExtractor={(item, index) => `${item.workoutId}-${index}`}
         renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={commonStyles.listContent}
         ListEmptyComponent={<Text style={commonStyles.mutedText}>No workouts added yet.</Text>}
       />
 
@@ -198,9 +198,6 @@ export default function PlanDetailsScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  listContent: {
-    paddingBottom: spacing.lg,
-  },
   modalContainer: {
     flex: 1,
     padding: spacing.sm,
@@ -215,8 +212,8 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: spacing.sm,
   },
-  itemContainer: commonStyles.card,
-  itemTitle: commonStyles.itemTitle,
+  itemContainer: commonStyles.interactiveListItem,
+  itemTitle: commonStyles.listItemTitle,
   actionRow: {
     ...commonStyles.row,
     marginTop: spacing.xs,
