@@ -10,6 +10,7 @@ import WorkoutDetailsScreen from './screens/WorkoutDetailsScreen';
 import PlansScreen from './screens/PlansScreen';
 import HistoryScreen from './screens/HistoryScreen';
 import { initDB } from './database/db';
+import { commonStyles } from './styles/common';
 
 // ✅ Tab navigator
 const Tab = createBottomTabNavigator();
@@ -56,7 +57,7 @@ export default function App() {
 
   if (!ready) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={commonStyles.centeredScreen}>
         <Text>Initializing database...</Text>
       </View>
     );

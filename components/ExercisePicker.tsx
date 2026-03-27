@@ -1,4 +1,3 @@
-// components/ExercisePicker.tsx
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -10,10 +9,12 @@ import {
 } from 'react-native';
 import ExerciseService from '../services/ExerciseService';
 import Exercise from '../models/Exercise';
+import { commonStyles } from '../styles/common';
+import { colors, spacing } from '../styles/theme';
 
 interface Props {
   onSelect: (exercise: Exercise) => void;
-  excludeIds?: number[]; // already selected exercises
+  excludeIds?: number[];
 }
 
 export default function ExercisePicker({ onSelect, excludeIds = [] }: Props) {
@@ -29,9 +30,9 @@ export default function ExercisePicker({ onSelect, excludeIds = [] }: Props) {
     load();
   }, []);
 
-  // Reuse the same search logic from ExercisesScreen
   const getSortedSearchResults = () => {
-    let filtered = exercises.filter(ex => !excludeIds.includes(ex.id!));
+    const filtered = exercises.filter(exercise => !excludeIds.includes(exercise.id!));
+
     if (!search.trim()) {
       return [...filtered].sort((a, b) => {
         if (a.favorite && !b.favorite) return -1;
@@ -42,26 +43,30 @@ export default function ExercisePicker({ onSelect, excludeIds = [] }: Props) {
 
     const lowerSearch = search.toLowerCase();
     const result: Exercise[] = [];
+    const fields: ('name' | 'primaryMuscle' | 'secondaryMuscle' | 'category' | 'notes')[] = [
+      'name',
+      'primaryMuscle',
+      'secondaryMuscle',
+      'category',
+      'notes',
+    ];
 
     const pushIfMatch = (
       field: 'name' | 'primaryMuscle' | 'secondaryMuscle' | 'category' | 'notes',
-      fav: boolean
+      favorite: boolean
     ) => {
-      filtered.forEach(ex => {
-        const value = ex[field];
+      filtered.forEach(exercise => {
+        const value = exercise[field];
         if (
           typeof value === 'string' &&
           value.toLowerCase().includes(lowerSearch) &&
-          ex.favorite === fav &&
-          !result.some(r => r.id === ex.id)
+          exercise.favorite === favorite &&
+          !result.some(existing => existing.id === exercise.id)
         ) {
-          result.push(ex);
+          result.push(exercise);
         }
       });
     };
-
-    const fields: ('name' | 'primaryMuscle' | 'secondaryMuscle' | 'category' | 'notes')[] =
-      ['name', 'primaryMuscle', 'secondaryMuscle', 'category', 'notes'];
 
     fields.forEach(field => {
       pushIfMatch(field, true);
@@ -72,12 +77,9 @@ export default function ExercisePicker({ onSelect, excludeIds = [] }: Props) {
   };
 
   const renderItem = ({ item }: { item: Exercise }) => (
-    <TouchableOpacity
-      style={styles.item}
-      onPress={() => onSelect(item)}
-    >
+    <TouchableOpacity style={styles.item} onPress={() => onSelect(item)}>
       <Text style={styles.name}>
-        {item.name} {item.favorite ? '⭐' : '☆'}
+        {item.name} {item.favorite ? '\u2B50' : '\u2606'}
       </Text>
       <Text style={styles.details}>
         {item.primaryMuscle}
@@ -89,28 +91,40 @@ export default function ExercisePicker({ onSelect, excludeIds = [] }: Props) {
   );
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <TextInput
         placeholder="Search exercises"
         value={search}
         onChangeText={setSearch}
-        style={styles.searchInput}
+        style={commonStyles.searchInput}
       />
 
       <FlatList
         data={getSortedSearchResults()}
         keyExtractor={item => item.id!.toString()}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={styles.listContent}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  searchInput: { borderWidth: 1, padding: 5, margin: 5, borderRadius: 5 },
-  item: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#ccc' },
-  name: { fontWeight: 'bold', fontSize: 16 },
-  details: { fontSize: 14, color: '#555' },
-  notes: { fontSize: 12, color: '#888', fontStyle: 'italic' },
+  container: {
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: spacing.lg,
+  },
+  item: {
+    padding: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  name: commonStyles.itemTitle,
+  details: commonStyles.mutedText,
+  notes: {
+    ...commonStyles.subtleText,
+    fontStyle: 'italic',
+  },
 });

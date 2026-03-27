@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { TouchableWithoutFeedback, Animated, Text, StyleSheet, View } from 'react-native';
+import { colors } from '../styles/theme';
 
 interface TogglePillProps {
   value: boolean;
@@ -59,7 +60,7 @@ export default function TogglePill({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#ddd',
+    backgroundColor: colors.borderSoft,
     justifyContent: 'center',
     position: 'relative',
   },
@@ -70,9 +71,9 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 5,
   },
-  text: { color: '#555', fontWeight: 'bold' },
+  text: { color: colors.textMuted, fontWeight: 'bold' },
   slider: {
-    backgroundColor: '#4caf50',
+    backgroundColor: colors.accent,
     position: 'absolute',
     top: 2,
     left: 2,

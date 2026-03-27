@@ -1,4 +1,3 @@
-// screens/ExercisesScreen.tsx
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -15,8 +14,9 @@ import { Picker } from '@react-native-picker/picker';
 import ExerciseService from '../services/ExerciseService';
 import Exercise from '../models/Exercise';
 import TogglePill from '../components/TogglePill';
+import { commonStyles } from '../styles/common';
+import { colors, spacing } from '../styles/theme';
 
-// Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
@@ -25,21 +25,20 @@ export default function ExercisesScreen() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [search, setSearch] = useState('');
   const [editingMode, setEditingMode] = useState(false);
-
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-
   const [name, setName] = useState('');
   const [primary, setPrimary] = useState('');
   const [secondary, setSecondary] = useState('');
-  const [category, setCategory] = useState<'strength'|'cardio'|'stretching'|'warmup'>('strength');
+  const [category, setCategory] = useState<'strength' | 'cardio' | 'stretching' | 'warmup'>('strength');
   const [notes, setNotes] = useState('');
 
-  // Load exercises
   const load = async () => setExercises(await ExerciseService.getAll());
-  useEffect(() => { load(); }, []);
 
-  // Close form when exiting edit mode
+  useEffect(() => {
+    load();
+  }, []);
+
   useEffect(() => {
     if (!editingMode) {
       setFormOpen(false);
@@ -47,35 +46,41 @@ export default function ExercisesScreen() {
     }
   }, [editingMode]);
 
-  const saveExercise = async () => {
-    if (!name.trim()) {
-      alert('Exercise name required');
-      return;
-    }
-
-    const ex = new Exercise(editingId, name, primary, secondary, category, notes);
-
-    if (editingId) await ExerciseService.update(ex);
-    else await ExerciseService.create(ex);
-
+  const resetForm = () => {
     setEditingId(null);
     setName('');
     setPrimary('');
     setSecondary('');
     setCategory('strength');
     setNotes('');
+  };
 
+  const saveExercise = async () => {
+    if (!name.trim()) {
+      alert('Exercise name required');
+      return;
+    }
+
+    const exercise = new Exercise(editingId, name, primary, secondary, category, notes);
+
+    if (editingId) {
+      await ExerciseService.update(exercise);
+    } else {
+      await ExerciseService.create(exercise);
+    }
+
+    resetForm();
     await load();
     setFormOpen(false);
   };
 
-  const editExercise = (ex: Exercise) => {
-    setEditingId(ex.id!);
-    setName(ex.name);
-    setPrimary(ex.primaryMuscle);
-    setSecondary(ex.secondaryMuscle);
-    setCategory(ex.category as any);
-    setNotes(ex.notes);
+  const editExercise = (exercise: Exercise) => {
+    setEditingId(exercise.id!);
+    setName(exercise.name);
+    setPrimary(exercise.primaryMuscle);
+    setSecondary(exercise.secondaryMuscle);
+    setCategory(exercise.category as 'strength' | 'cardio' | 'stretching' | 'warmup');
+    setNotes(exercise.notes);
     setFormOpen(true);
   };
 
@@ -104,26 +109,30 @@ export default function ExercisesScreen() {
 
     const lowerSearch = search.toLowerCase();
     const result: Exercise[] = [];
+    const fields: ('name' | 'primaryMuscle' | 'secondaryMuscle' | 'category' | 'notes')[] = [
+      'name',
+      'primaryMuscle',
+      'secondaryMuscle',
+      'category',
+      'notes',
+    ];
 
     const pushIfMatch = (
       field: 'name' | 'primaryMuscle' | 'secondaryMuscle' | 'category' | 'notes',
-      fav: boolean
+      favorite: boolean
     ) => {
-      exercises.forEach(ex => {
-        const value = ex[field];
+      exercises.forEach(exercise => {
+        const value = exercise[field];
         if (
           typeof value === 'string' &&
           value.toLowerCase().includes(lowerSearch) &&
-          ex.favorite === fav &&
-          !result.some(r => r.id === ex.id)
+          exercise.favorite === favorite &&
+          !result.some(existing => existing.id === exercise.id)
         ) {
-          result.push(ex);
+          result.push(exercise);
         }
       });
     };
-
-    const fields: ('name' | 'primaryMuscle' | 'secondaryMuscle' | 'category' | 'notes')[] =
-      ['name', 'primaryMuscle', 'secondaryMuscle', 'category', 'notes'];
 
     fields.forEach(field => {
       pushIfMatch(field, true);
@@ -135,59 +144,54 @@ export default function ExercisesScreen() {
 
   const renderItem = ({ item }: { item: Exercise }) => (
     <View style={styles.itemContainer}>
-      {/* Title + Star */}
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Text
-          style={[styles.itemTitle, { flex: 1 }]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
+      <View style={commonStyles.row}>
+        <Text style={styles.itemTitle} numberOfLines={1} ellipsizeMode="tail">
           {item.name} ({item.primaryMuscle})
         </Text>
-
-        {!editingMode && item.favorite && <Text>⭐</Text>}
+        {!editingMode && item.favorite && <Text>{'\u2B50'}</Text>}
       </View>
 
-      <Text style={styles.itemCategory}>
-        <Text style={styles.label}>Category: </Text>{item.category}
+      <Text style={styles.itemMeta}>
+        <Text style={commonStyles.boldText}>Category: </Text>
+        {item.category}
       </Text>
 
       {item.secondaryMuscle ? (
-        <Text style={styles.itemSecondary}>
-          <Text style={styles.label}>Secondary: </Text>{item.secondaryMuscle}
+        <Text style={styles.itemMeta}>
+          <Text style={commonStyles.boldText}>Secondary: </Text>
+          {item.secondaryMuscle}
         </Text>
       ) : null}
 
       {item.notes ? (
-        <Text style={styles.itemNotes}>
-          <Text style={styles.label}>Note: </Text>{item.notes}
+        <Text style={styles.itemMeta}>
+          <Text style={commonStyles.boldText}>Note: </Text>
+          {item.notes}
         </Text>
       ) : null}
 
-      {/* Editing buttons */}
       {editingMode && (
-        <View style={{ flexDirection: 'row', marginTop: 5 }}>
+        <View style={styles.actionRow}>
           <Button
-            title={item.favorite ? '⭐' : '☆'}
+            title={item.favorite ? '\u2B50' : '\u2606'}
             onPress={async () => {
               await ExerciseService.toggleFavorite(item.id!, !item.favorite);
               load();
             }}
           />
-          <View style={{ width: 10 }} />
+          <View style={styles.actionSpacer} />
           <Button title="Edit" onPress={() => editExercise(item)} />
-          <View style={{ width: 10 }} />
-          <Button title="Delete" color="red" onPress={() => deleteExercise(item.id!)} />
+          <View style={styles.actionSpacer} />
+          <Button title="Delete" color={colors.danger} onPress={() => deleteExercise(item.id!)} />
         </View>
       )}
     </View>
   );
 
   return (
-    <View style={{ flex: 1, padding: 20 }}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Exercises</Text>
+    <View style={commonStyles.screen}>
+      <View style={commonStyles.headerRow}>
+        <Text style={commonStyles.title}>Exercises</Text>
         <TogglePill
           value={editingMode}
           onChange={setEditingMode}
@@ -198,39 +202,45 @@ export default function ExercisesScreen() {
         />
       </View>
 
-      {/* Search */}
       <TextInput
         placeholder="Search exercises"
         value={search}
         onChangeText={setSearch}
-        style={styles.searchInput}
+        style={commonStyles.searchInput}
       />
 
-      {/* Add button */}
       {editingMode && !formOpen && (
         <Button
           title="Add Exercise"
           onPress={() => {
-            setEditingId(null);
-            setName('');
-            setPrimary('');
-            setSecondary('');
-            setCategory('strength');
-            setNotes('');
+            resetForm();
             setFormOpen(true);
           }}
         />
       )}
 
-      {/* Inline Form */}
       {editingMode && formOpen && (
-        <View style={styles.formContainer}>
+        <View style={commonStyles.sectionSpacing}>
           <TextInput placeholder="Name" value={name} onChangeText={setName} style={styles.input} />
-          <TextInput placeholder="Primary Muscle" value={primary} onChangeText={setPrimary} style={styles.input} />
-          <TextInput placeholder="Secondary Muscle" value={secondary} onChangeText={setSecondary} style={styles.input} />
+          <TextInput
+            placeholder="Primary Muscle"
+            value={primary}
+            onChangeText={setPrimary}
+            style={styles.input}
+          />
+          <TextInput
+            placeholder="Secondary Muscle"
+            value={secondary}
+            onChangeText={setSecondary}
+            style={styles.input}
+          />
 
-          <Text style={{ fontWeight: 'bold' }}>Category:</Text>
-          <Picker selectedValue={category} onValueChange={v => setCategory(v as any)} style={styles.picker}>
+          <Text style={commonStyles.boldText}>Category:</Text>
+          <Picker
+            selectedValue={category}
+            onValueChange={value => setCategory(value as typeof category)}
+            style={styles.picker}
+          >
             <Picker.Item label="Strength" value="strength" />
             <Picker.Item label="Cardio" value="cardio" />
             <Picker.Item label="Stretching" value="stretching" />
@@ -242,23 +252,14 @@ export default function ExercisesScreen() {
             value={notes}
             onChangeText={setNotes}
             multiline
-            style={[styles.input, { height: 60 }]}
+            style={[styles.input, styles.notesInput]}
           />
 
-          <Button
-            title={editingId ? 'Update Exercise' : 'Add Exercise'}
-            onPress={saveExercise}
-          />
-
-          <Button 
-            title="Cancel" 
-            color="red"
-            onPress={() => setFormOpen(false)} 
-          />
+          <Button title={editingId ? 'Update Exercise' : 'Add Exercise'} onPress={saveExercise} />
+          <Button title="Cancel" color={colors.danger} onPress={() => setFormOpen(false)} />
         </View>
       )}
 
-      {/* List */}
       <FlatList
         data={getSortedSearchResults()}
         keyExtractor={item => item.id!.toString()}
@@ -269,16 +270,27 @@ export default function ExercisesScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  title: { fontSize: 24, fontWeight: 'bold' },
-  searchInput: { borderWidth: 1, padding: 5, marginBottom: 10 },
-  formContainer: { marginBottom: 15 },
-  input: { borderWidth: 1, padding: 5, marginBottom: 5 },
-  picker: { marginBottom: 10 },
-  itemContainer: { marginBottom: 10, borderBottomWidth: 1, paddingBottom: 5 },
-  itemTitle: { fontWeight: 'bold', fontSize: 16 },
-  itemCategory: { fontSize: 14, color: '#555' },
-  itemSecondary: { fontSize: 14, color: '#555' },
-  itemNotes: { fontSize: 14, color: '#555' },
-  label: { fontWeight: 'bold' },
+  input: {
+    ...commonStyles.input,
+    marginBottom: spacing.xs,
+  },
+  notesInput: {
+    height: 60,
+  },
+  picker: {
+    marginBottom: spacing.sm,
+  },
+  itemContainer: commonStyles.listItem,
+  itemTitle: {
+    ...commonStyles.itemTitle,
+    flex: 1,
+  },
+  itemMeta: commonStyles.mutedText,
+  actionRow: {
+    ...commonStyles.row,
+    marginTop: spacing.xs,
+  },
+  actionSpacer: {
+    width: spacing.sm,
+  },
 });

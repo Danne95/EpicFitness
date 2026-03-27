@@ -14,6 +14,8 @@ import { WorkoutsStackParamList } from '../App';
 import WorkoutService from '../services/WorkoutService';
 import Workout from '../models/Workout';
 import TogglePill from '../components/TogglePill';
+import { commonStyles } from '../styles/common';
+import { colors, spacing } from '../styles/theme';
 
 type Props = NativeStackScreenProps<WorkoutsStackParamList, 'WorkoutsList'>;
 
@@ -34,8 +36,8 @@ export default function WorkoutsScreen({ navigation }: Props) {
 
   const addWorkout = async () => {
     if (!newWorkoutName.trim()) return;
-    const w = new Workout(null, newWorkoutName);
-    await WorkoutService.create(w);
+    const workout = new Workout(null, newWorkoutName);
+    await WorkoutService.create(workout);
     setNewWorkoutName('');
     loadWorkouts();
   };
@@ -77,9 +79,9 @@ export default function WorkoutsScreen({ navigation }: Props) {
             value={editingWorkout?.name}
             onChangeText={text => setEditingWorkout({ ...editingWorkout!, name: text })}
           />
-          <View style={{ flexDirection: 'row', marginTop: 5 }}>
+          <View style={styles.actionRow}>
             <Button title="Save" onPress={editWorkoutName} />
-            <View style={{ width: 10 }} />
+            <View style={styles.actionSpacer} />
             <Button title="Cancel" onPress={() => setEditingWorkout(null)} />
           </View>
         </View>
@@ -92,21 +94,19 @@ export default function WorkoutsScreen({ navigation }: Props) {
         onPress={() => navigation.navigate('WorkoutDetails', { workoutId: item.id! })}
       >
         <View style={styles.itemHeader}>
-          <Text style={[styles.itemTitle, { flexShrink: 1 }]} numberOfLines={1} ellipsizeMode="tail" >
+          <Text style={styles.itemTitle} numberOfLines={1} ellipsizeMode="tail">
             {item.name}
           </Text>
-
-          {!editingMode && item.favorite && (
-            <Text>⭐</Text>
-          )}
+          {!editingMode && item.favorite && <Text>{'\u2B50'}</Text>}
         </View>
+
         {editingMode && (
-          <View style={{ flexDirection: 'row', marginTop: 5 }}>
-            <Button title={item.favorite ? '⭐' : '☆'} onPress={() => toggleFavorite(item)} />
-            <View style={{ width: 10 }} />
+          <View style={styles.actionRow}>
+            <Button title={item.favorite ? '\u2B50' : '\u2606'} onPress={() => toggleFavorite(item)} />
+            <View style={styles.actionSpacer} />
             <Button title="Edit" onPress={() => setEditingWorkout(item)} />
-            <View style={{ width: 10 }} />
-            <Button title="Delete" color="red" onPress={() => deleteWorkout(item.id!)} />
+            <View style={styles.actionSpacer} />
+            <Button title="Delete" color={colors.danger} onPress={() => deleteWorkout(item.id!)} />
           </View>
         )}
       </TouchableOpacity>
@@ -114,10 +114,9 @@ export default function WorkoutsScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={{ flex: 1, padding: 20 }}>
-      {/* Header with toggle */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Workouts List:</Text>
+    <View style={commonStyles.screen}>
+      <View style={commonStyles.headerRow}>
+        <Text style={commonStyles.title}>Workouts List:</Text>
         <TogglePill
           value={editingMode}
           onChange={setEditingMode}
@@ -128,9 +127,8 @@ export default function WorkoutsScreen({ navigation }: Props) {
         />
       </View>
 
-      {/* New Workout Form */}
       {editingMode && (
-        <View style={styles.formContainer}>
+        <View style={commonStyles.sectionSpacing}>
           <TextInput
             placeholder="New Workout Name"
             value={newWorkoutName}
@@ -141,46 +139,35 @@ export default function WorkoutsScreen({ navigation }: Props) {
         </View>
       )}
 
-      {/* Workout List */}
       <FlatList
         data={workouts}
         keyExtractor={item => item.id!.toString()}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={styles.listContent}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 15,
+  listContent: {
+    paddingBottom: spacing.lg,
   },
-  title: { fontSize: 24, fontWeight: 'bold' },
-  formContainer: { marginBottom: 15 },
-  itemContainer: {
-    marginBottom: 15,
-    padding: 15,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+  itemContainer: commonStyles.card,
+  itemHeader: commonStyles.row,
+  itemTitle: {
+    ...commonStyles.itemTitle,
+    flexShrink: 1,
   },
-  itemHeader: { flexDirection: 'row', alignItems: 'center' },
-  itemTitle: { fontWeight: 'bold', fontSize: 16 },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 5,
-    marginVertical: 5,
-    borderRadius: 5,
+    ...commonStyles.input,
+    marginVertical: spacing.xs,
+  },
+  actionRow: {
+    ...commonStyles.row,
+    marginTop: spacing.xs,
+  },
+  actionSpacer: {
+    width: spacing.sm,
   },
 });

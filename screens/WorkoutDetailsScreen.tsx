@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Modal,
   TextInput,
-  TouchableOpacity,
 } from 'react-native';
 import WorkoutService from '../services/WorkoutService';
 import ExercisePicker from '../components/ExercisePicker';
@@ -16,6 +15,8 @@ import ExerciseService from '../services/ExerciseService';
 import Workout, { WorkoutExercise } from '../models/Workout';
 import Exercise from '../models/Exercise';
 import TogglePill from '../components/TogglePill';
+import { commonStyles } from '../styles/common';
+import { colors, spacing } from '../styles/theme';
 
 interface Props {
   route: any;
@@ -29,7 +30,7 @@ export default function WorkoutDetailsScreen({ route }: Props) {
   const [pickerVisible, setPickerVisible] = useState(false);
   const [allExercises, setAllExercises] = useState<Exercise[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editingMode, setEditingMode] = useState(false); // ✅ toggle
+  const [editingMode, setEditingMode] = useState(false);
 
   useEffect(() => {
     loadWorkout();
@@ -43,13 +44,14 @@ export default function WorkoutDetailsScreen({ route }: Props) {
 
   const loadWorkout = async () => {
     const allWorkouts = await WorkoutService.getAll();
-    const w = allWorkouts.find(w => w.id === workoutId);
-    setWorkout(w || null);
+    const selectedWorkout = allWorkouts.find(current => current.id === workoutId);
+    setWorkout(selectedWorkout || null);
   };
 
   const handleSelectExercise = async (exercise: Exercise) => {
     if (!workout) return;
-    const newEx = new WorkoutExercise(
+
+    const newExercise = new WorkoutExercise(
       null,
       workout.id!,
       exercise.id!,
@@ -61,7 +63,8 @@ export default function WorkoutDetailsScreen({ route }: Props) {
       undefined,
       ''
     );
-    workout.exercises.push(newEx);
+
+    workout.exercises.push(newExercise);
     await WorkoutService.update(workout);
     setPickerVisible(false);
     loadWorkout();
@@ -69,6 +72,7 @@ export default function WorkoutDetailsScreen({ route }: Props) {
 
   const deleteExercise = (index: number) => {
     if (!workout) return;
+
     Alert.alert('Remove Exercise', 'Are you sure you want to remove this exercise?', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -85,56 +89,64 @@ export default function WorkoutDetailsScreen({ route }: Props) {
 
   const moveExercise = async (index: number, direction: 'up' | 'down') => {
     if (!workout) return;
-    const exList = workout.exercises;
+
     const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= exList.length) return;
-    [exList[index], exList[newIndex]] = [exList[newIndex], exList[index]];
-    exList.forEach((ex, i) => (ex.orderIndex = i));
+    if (newIndex < 0 || newIndex >= workout.exercises.length) return;
+
+    [workout.exercises[index], workout.exercises[newIndex]] = [
+      workout.exercises[newIndex],
+      workout.exercises[index],
+    ];
+    workout.exercises.forEach((exercise, orderIndex) => {
+      exercise.orderIndex = orderIndex;
+    });
+
     await WorkoutService.update(workout);
     loadWorkout();
   };
 
-  const startEdit = (index: number) => {
-    setEditingIndex(index);
-  };
-
   const saveEdit = async (index: number, updated: Partial<WorkoutExercise>) => {
     if (!workout) return;
-    const ex = workout.exercises[index];
-    Object.assign(ex, updated);
+    Object.assign(workout.exercises[index], updated);
     await WorkoutService.update(workout);
     setEditingIndex(null);
     loadWorkout();
   };
 
-  if (!workout) return <Text>Loading...</Text>;
+  if (!workout) {
+    return (
+      <View style={commonStyles.centeredScreen}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   const renderItem = ({ item, index }: { item: WorkoutExercise; index: number }) => {
-    const exInfo = allExercises.find(e => e.id === item.exerciseId);
+    const exerciseInfo = allExercises.find(exercise => exercise.id === item.exerciseId);
 
     if (editingIndex === index) {
       return (
         <View style={styles.itemContainer}>
-          <Text style={styles.itemTitle}>{exInfo?.name}</Text>
+          <Text style={styles.itemTitle}>{exerciseInfo?.name}</Text>
           <TextInput
             placeholder="Sets"
             keyboardType="numeric"
             value={item.sets?.toString() || ''}
-            onChangeText={text => (item.sets = text ? parseInt(text) : undefined)}
+            onChangeText={text => (item.sets = text ? parseInt(text, 10) : undefined)}
             style={styles.input}
           />
           <TextInput
             placeholder="Reps"
             keyboardType="numeric"
             value={item.reps?.toString() || ''}
-            onChangeText={text => (item.reps = text ? parseInt(text) : undefined)}
+            onChangeText={text => (item.reps = text ? parseInt(text, 10) : undefined)}
             style={styles.input}
           />
           <TextInput
             placeholder="Duration"
             keyboardType="numeric"
             value={item.duration?.toString() || ''}
-            onChangeText={text => (item.duration = text ? parseInt(text) : undefined)}
+            onChangeText={text => (item.duration = text ? parseInt(text, 10) : undefined)}
             style={styles.input}
           />
           <TextInput
@@ -148,7 +160,7 @@ export default function WorkoutDetailsScreen({ route }: Props) {
             placeholder="Rest Time"
             keyboardType="numeric"
             value={item.restTime?.toString() || ''}
-            onChangeText={text => (item.restTime = text ? parseInt(text) : undefined)}
+            onChangeText={text => (item.restTime = text ? parseInt(text, 10) : undefined)}
             style={styles.input}
           />
           <TextInput
@@ -165,28 +177,27 @@ export default function WorkoutDetailsScreen({ route }: Props) {
 
     return (
       <View style={styles.itemContainer}>
-        <Text style={styles.itemTitle}>{exInfo?.name}</Text>
-        <Text>
-          {exInfo?.primaryMuscle}
-          {exInfo?.secondaryMuscle ? `, ${exInfo.secondaryMuscle}` : ''}
+        <Text style={styles.itemTitle}>{exerciseInfo?.name}</Text>
+        <Text style={commonStyles.bodyText}>
+          {exerciseInfo?.primaryMuscle}
+          {exerciseInfo?.secondaryMuscle ? `, ${exerciseInfo.secondaryMuscle}` : ''}
         </Text>
-        {item.sets !== undefined ? <Text>Sets: {item.sets}</Text> : null}
-        {item.reps !== undefined ? <Text>Reps: {item.reps}</Text> : null}
-        {item.duration ? <Text>Duration: {item.duration}</Text> : null}
-        {item.weight ? <Text>Weight: {item.weight}</Text> : null}
-        {item.restTime ? <Text>Rest: {item.restTime}</Text> : null}
-        {item.notes ? <Text>Note: {item.notes}</Text> : null}
+        {item.sets !== undefined ? <Text style={commonStyles.bodyText}>Sets: {item.sets}</Text> : null}
+        {item.reps !== undefined ? <Text style={commonStyles.bodyText}>Reps: {item.reps}</Text> : null}
+        {item.duration ? <Text style={commonStyles.bodyText}>Duration: {item.duration}</Text> : null}
+        {item.weight ? <Text style={commonStyles.bodyText}>Weight: {item.weight}</Text> : null}
+        {item.restTime ? <Text style={commonStyles.bodyText}>Rest: {item.restTime}</Text> : null}
+        {item.notes ? <Text style={commonStyles.bodyText}>Note: {item.notes}</Text> : null}
 
-        {/* Buttons hidden when editingMode is off */}
         {editingMode && (
-          <View style={{ flexDirection: 'row', marginTop: 5 }}>
-            <Button title="▲" onPress={() => moveExercise(index, 'up')} />
-            <View style={{ width: 5 }} />
-            <Button title="▼" onPress={() => moveExercise(index, 'down')} />
-            <View style={{ width: 5 }} />
-            <Button title="Edit" onPress={() => startEdit(index)} />
-            <View style={{ width: 5 }} />
-            <Button title="Delete" color="red" onPress={() => deleteExercise(index)} />
+          <View style={styles.actionRow}>
+            <Button title="â–²" onPress={() => moveExercise(index, 'up')} />
+            <View style={styles.actionSpacer} />
+            <Button title="â–¼" onPress={() => moveExercise(index, 'down')} />
+            <View style={styles.actionSpacer} />
+            <Button title="Edit" onPress={() => setEditingIndex(index)} />
+            <View style={styles.actionSpacer} />
+            <Button title="Delete" color={colors.danger} onPress={() => deleteExercise(index)} />
           </View>
         )}
       </View>
@@ -194,10 +205,9 @@ export default function WorkoutDetailsScreen({ route }: Props) {
   };
 
   return (
-    <View style={{ flex: 1, padding: 20 }}>
-      {/* Header with toggle */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Exercises List:</Text>
+    <View style={commonStyles.screen}>
+      <View style={commonStyles.headerRow}>
+        <Text style={commonStyles.title}>Exercises List:</Text>
         <TogglePill
           value={editingMode}
           onChange={setEditingMode}
@@ -209,23 +219,20 @@ export default function WorkoutDetailsScreen({ route }: Props) {
       </View>
 
       <FlatList
-        data={workout.exercises.sort((a, b) => a.orderIndex - b.orderIndex)}
-        keyExtractor={(_, i) => i.toString()}
+        data={[...workout.exercises].sort((a, b) => a.orderIndex - b.orderIndex)}
+        keyExtractor={(_, index) => index.toString()}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={styles.listContent}
       />
 
-      {/* Add Exercise hidden when editingMode is off */}
-      {editingMode && (
-        <Button title="Add Exercise" onPress={() => setPickerVisible(true)} />
-      )}
+      {editingMode && <Button title="Add Exercise" onPress={() => setPickerVisible(true)} />}
 
       <Modal visible={pickerVisible} animationType="slide">
-        <View style={{ flex: 1, padding: 10 }}>
+        <View style={styles.modalContainer}>
           <Button title="Close" onPress={() => setPickerVisible(false)} />
           <ExercisePicker
             onSelect={handleSelectExercise}
-            excludeIds={workout.exercises.map(ex => ex.exerciseId)}
+            excludeIds={workout.exercises.map(exercise => exercise.exerciseId)}
           />
         </View>
       </Modal>
@@ -234,19 +241,28 @@ export default function WorkoutDetailsScreen({ route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 15,
+  listContent: {
+    paddingBottom: spacing.lg,
   },
-  title: { fontWeight: 'bold', fontSize: 24 },
+  modalContainer: {
+    flex: 1,
+    padding: spacing.sm,
+    backgroundColor: colors.background,
+  },
   itemContainer: {
-    marginBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    paddingBottom: 5,
+    ...commonStyles.listItem,
+    marginBottom: spacing.md,
   },
-  itemTitle: { fontWeight: 'bold', fontSize: 16 },
-  input: { borderWidth: 1, padding: 5, marginVertical: 3, borderRadius: 5 },
+  itemTitle: commonStyles.itemTitle,
+  input: {
+    ...commonStyles.input,
+    marginVertical: 3,
+  },
+  actionRow: {
+    ...commonStyles.row,
+    marginTop: spacing.xs,
+  },
+  actionSpacer: {
+    width: spacing.xs,
+  },
 });
