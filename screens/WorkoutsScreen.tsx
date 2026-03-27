@@ -27,7 +27,13 @@ export default function WorkoutsScreen({ navigation }: Props) {
 
   const loadWorkouts = async () => {
     const all = await WorkoutService.getAll();
-    setWorkouts(all);
+    setWorkouts(
+      [...all].sort((a, b) => {
+        if (a.favorite && !b.favorite) return -1;
+        if (!a.favorite && b.favorite) return 1;
+        return a.name.localeCompare(b.name);
+      })
+    );
   };
 
   useEffect(() => {

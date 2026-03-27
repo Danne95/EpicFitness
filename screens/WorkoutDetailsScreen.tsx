@@ -15,6 +15,7 @@ import ExerciseService from '../services/ExerciseService';
 import Workout, { WorkoutExercise } from '../models/Workout';
 import Exercise from '../models/Exercise';
 import TogglePill from '../components/TogglePill';
+import BackArrowButton from '../components/BackArrowButton';
 import { commonStyles } from '../styles/common';
 import { colors, spacing } from '../styles/theme';
 
@@ -32,7 +33,7 @@ interface ExerciseEditDraft {
   notes: string;
 }
 
-export default function WorkoutDetailsScreen({ route }: Props) {
+export default function WorkoutDetailsScreen({ route, navigation }: Props) {
   const workoutId: number = route.params.workoutId;
 
   const [workout, setWorkout] = useState<Workout | null>(null);
@@ -261,7 +262,12 @@ export default function WorkoutDetailsScreen({ route }: Props) {
   return (
     <View style={commonStyles.screen}>
       <View style={commonStyles.headerRow}>
-        <Text style={commonStyles.title}>Exercises List:</Text>
+        <View style={styles.titleRow}>
+          <BackArrowButton onPress={() => navigation.goBack()} />
+          <Text style={styles.titleText} numberOfLines={1} ellipsizeMode="tail">
+            {workout.name}
+          </Text>
+        </View>
         <TogglePill
           value={editingMode}
           onChange={setEditingMode}
@@ -318,5 +324,14 @@ const styles = StyleSheet.create({
   },
   actionSpacer: {
     width: spacing.xs,
+  },
+  titleRow: {
+    ...commonStyles.row,
+    flex: 1,
+  },
+  titleText: {
+    ...commonStyles.title,
+    flex: 1,
+    marginLeft: spacing.sm,
   },
 });

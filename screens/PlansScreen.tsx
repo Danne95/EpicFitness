@@ -31,7 +31,13 @@ export default function PlansScreen({ navigation }: Props) {
 
   const loadPlans = async () => {
     const allPlans = await PlanService.getAll();
-    setPlans(allPlans);
+    setPlans(
+      [...allPlans].sort((a, b) => {
+        if (a.favorite && !b.favorite) return -1;
+        if (!a.favorite && b.favorite) return 1;
+        return a.name.localeCompare(b.name);
+      })
+    );
   };
 
   const addPlan = async () => {
@@ -116,7 +122,7 @@ export default function PlansScreen({ navigation }: Props) {
   return (
     <View style={commonStyles.screen}>
       <View style={commonStyles.headerRow}>
-        <Text style={commonStyles.title}>Training Plans</Text>
+        <Text style={commonStyles.title}>Training Plans:</Text>
         <TogglePill
           value={editingMode}
           onChange={setEditingMode}

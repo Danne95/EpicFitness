@@ -191,7 +191,7 @@ export default function ExercisesScreen() {
   return (
     <View style={commonStyles.screen}>
       <View style={commonStyles.headerRow}>
-        <Text style={commonStyles.title}>Exercises</Text>
+        <Text style={commonStyles.title}>Exercises List:</Text>
         <TogglePill
           value={editingMode}
           onChange={setEditingMode}
