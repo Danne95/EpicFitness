@@ -8,6 +8,7 @@ import ExercisesScreen from './screens/ExercisesScreen';
 import WorkoutsScreen from './screens/WorkoutsScreen';
 import WorkoutDetailsScreen from './screens/WorkoutDetailsScreen';
 import PlansScreen from './screens/PlansScreen';
+import PlanDetailsScreen from './screens/PlanDetailsScreen';
 import HistoryScreen from './screens/HistoryScreen';
 import { initDB } from './database/db';
 import { commonStyles } from './styles/common';
@@ -40,6 +41,29 @@ function WorkoutsStackScreen() {
   );
 }
 
+export type PlansStackParamList = {
+  PlansList: undefined;
+  PlanDetails: { planId: number };
+};
+const PlansStack = createNativeStackNavigator<PlansStackParamList>();
+
+function PlansStackScreen() {
+  return (
+    <PlansStack.Navigator>
+      <PlansStack.Screen
+        name="PlansList"
+        component={PlansScreen}
+        options={{ headerShown: false }}
+      />
+      <PlansStack.Screen
+        name="PlanDetails"
+        component={PlanDetailsScreen}
+        options={{ headerShown: false }}
+      />
+    </PlansStack.Navigator>
+  );
+}
+
 export default function App() {
   const [ready, setReady] = useState(false);
 
@@ -68,7 +92,7 @@ export default function App() {
       <Tab.Navigator>
         <Tab.Screen name="Exercises" component={ExercisesScreen} />
         <Tab.Screen name="Workouts" component={WorkoutsStackScreen} />
-        <Tab.Screen name="Plans" component={PlansScreen} />
+        <Tab.Screen name="Plans" component={PlansStackScreen} />
         <Tab.Screen name="History" component={HistoryScreen} />
       </Tab.Navigator>
     </NavigationContainer>

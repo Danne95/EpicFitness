@@ -37,7 +37,8 @@ export const initDB = async () => {
 
     CREATE TABLE IF NOT EXISTS training_plans (
       id INTEGER PRIMARY KEY NOT NULL,
-      name TEXT
+      name TEXT,
+      favorite INTEGER DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS plan_workouts (
@@ -58,6 +59,15 @@ export const initDB = async () => {
       notes TEXT
     );
   `);
+
+  const trainingPlanColumns = await db.getAllAsync(`PRAGMA table_info(training_plans)`);
+  const hasFavoriteColumn = (trainingPlanColumns as { name: string }[]).some(
+    column => column.name === 'favorite'
+  );
+
+  if (!hasFavoriteColumn) {
+    await db.execAsync(`ALTER TABLE training_plans ADD COLUMN favorite INTEGER DEFAULT 0;`);
+  }
 };
 
 export const getDB = () => db;
